@@ -1,0 +1,4 @@
+bs4 == 0.0.1
+selenium == 4.6.0
+tk == 0.1.0
+pandas 
