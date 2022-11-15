@@ -9,49 +9,45 @@ import tkinter as tk
 # from selenium.webdriver.common.keys import Keys
 # from selenium_stealth import stealth
 import time
+import os
 from datetime import datetime
+import getpass
+# import subprocess
 
 options = webdriver.ChromeOptions()
+
 options.add_argument("start-maximized")
 options.add_argument('--no-sandbox')
+options.add_argument("--allow-running-insecure-content")
+options.add_argument("--disable-popup-blocking")
+options.add_argument("no-default-browser-check")
+options.add_argument("--profile-directory=Default")
+direc_usr_data = f"{os.getcwd()}\\User Data"
+options.add_argument(f"--user-data-dir={direc_usr_data}")
+options.add_argument('--disable-blink-features=AutomationControlled')
 options.add_argument('--disable-dev-shm-usage')
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
 options.add_experimental_option('useAutomationExtension', False)
-driver_path = r"D:\OneDrive - Trường ĐH CNTT - University of Information Technology\Máy tính\app_tracking\chromedriver.exe"
-driver = webdriver.Chrome(options=options, executable_path=driver_path)
-# stealth(driver,
-#         languages=["en-US", "en"],
-#         vendor="Google Inc.",
-#         platform="Win32",
-#         webgl_vendor="Intel Inc.",
-#         renderer="Intel Iris OpenGL Engine",
-#         fix_hairline=True,
-#         )
+# driver_path = 'https://github.com/DaiVo20/Short-Video-Recommendation/blob/efe162bd8e012c1017abda15a64efc47b30a157b/chromedriver.exe'
+driver = webdriver.Chrome(options=options, executable_path='chromedriver.exe')
 
 URL = "https://www.tiktok.com/foryou?is_copy_url=1&is_from_webapp=v1"
 driver.get(URL)
-time.sleep(3)
-# input('Press Enter after you\'ve logged in')
-soup = BeautifulSoup(driver.page_source, 'html.parser')
-feed_video = soup.find('div', {'data-e2e': 'feed-video'})
-
-for vid in feed_video:
-    item = vid.find('div', {'mode': "0"})
-    if item is not None:
-        ite = item.contents[1]
-        first_vid_x_path = ite.contents[0].attrs['id']
-
+# time.sleep(3)
+input('Press Enter after you\'ve logged in')
 # create action chain object
 action = ActionChains(driver)
-first_vid_ele = driver.find_element(By.XPATH, f'//*[@id="{first_vid_x_path}"]/video')
+first_vid_ele = driver.find_element(By.XPATH,
+                                    '//*[@id="app"]/div[2]/div[2]/div[1]/div[1]/div/div[2]/div[1]/div/div[1]/div')
 action.move_to_element(first_vid_ele).click().perform()
 
 
-def update_time():
-    _now = datetime.now()
-    _time_now = _now.strftime("%H:%M:%S")
-    time_clock.config(text=f"{_time_now}")
-    app.after(1000, update_time)
+def is_logged_in():
+    try:
+        logged_in = driver.find_element(By.XPATH, '//*[@id="app"]/div[1]/div/div[2]/div[4]')
+        logged_in_button.config(text='Logged-in', fg="black", bg='green')
+    except:
+        pass
 
 
 def press_button(button):
@@ -59,24 +55,26 @@ def press_button(button):
     global like
     global action
 
-    ele = None
     flag = False
     if button == 'Up':
         ele = '//*[@id="app"]/div[2]/div[3]/div[1]/button[2]'
     elif button == 'Down':
         ele = '//*[@id="app"]/div[2]/div[3]/div[1]/button[3]'
     elif button == 'Like':
-        # ele = '//*[@id="app"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[1]/div[1]/button[1]'
+        ele = '//*[@id="app"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[1]/div[1]/button[1]'
         like = 1
         flag = True
     old_time = time.time()
 
-    if ele is not None:
+    try:
         button_ele = driver.find_element(By.XPATH, ele)
         action.move_to_element(button_ele).click().perform()
-        time_swift = old_time
-        record_history()
-        like = 0
+        if not flag:
+            time_swift = old_time
+            record_history()
+            like = 0
+    except:
+        pass
 
     # try:
     #     button_ele = driver.find_element(By.XPATH, ele)
@@ -103,6 +101,8 @@ def record_history():
     cmt_count = driver.find_element(By.XPATH, '//*[@id="app"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[1]/div['
                                               '1]/button[2]/strong').text
     ele_time_container = driver.find_element(By.XPATH, '//*[@id="app"]/div[2]/div[3]/div[1]/div[2]/div[2]')
+    # like = driver.find_element(By.XPATH,
+    #                            '//*[@id="app"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[1]/div[1]/button[1]/span/svg')
     action.move_to_element(ele_time_container).click().perform()
     time_container = ele_time_container.text
 
@@ -133,13 +133,11 @@ def display_history():
     cols = ['url', 'desc_video', 'like_count', 'comment_count', 'like', 'time_container', 'timestamp']
     df = pd.DataFrame(history, columns=cols)
     if not df.empty:
+        user_name = getpass.getuser()
+        df['user'] = [user_name] * len(df)
         file_name = get_random_string(20)
         df.to_csv(f'{file_name}.csv', index=False)
         print(df)
-
-
-def upload2drive():
-    return None
 
 
 now = datetime.now()
@@ -154,28 +152,43 @@ app = tk.Tk()
 app.geometry('250x400')
 app.wm_title("TikTok label")
 
-time_clock = tk.Label(app, text=f"{time_now}")
-time_clock.pack(expand=True)
-app.after(1000, update_time)
+# time_clock = tk.Label(app, text=f"{time_now}")
+# time_clock.pack(expand=True)
+# app.after(1000, update_time)
 
-up_button = tk.Button(app, width=25, height=5, text="Up", fg="black",
+logged_in_button = tk.Button(app, width=25, height=5, text="Log in ?", bg="white",
+                             fg='red', command=lambda: is_logged_in())
+logged_in_button.pack(expand=True)
+
+up_button = tk.Button(app, width=10, height=5, text="Up (^)", fg="black",
                       command=lambda: press_button('Up'))
 up_button.pack(expand=True)
 
-like_button = tk.Button(app, width=25, height=5, text="Like", fg="black", bg='red',
-                        command=lambda: press_button('Like'))
-like_button.pack(expand=True)
-
-down_button = tk.Button(app, width=25, height=5, text="Down", fg="green",
+down_button = tk.Button(app, width=10, height=5, text="Down (v)", fg="green",
                         command=lambda: press_button('Down'))
 down_button.pack(expand=True)
 
+like_button = tk.Button(app, width=25, height=5, text="Like (l)", fg="black", bg='red',
+                        command=lambda: press_button('Like'))
+like_button.pack(expand=True)
+
 view_file = tk.Button(app, width=15, height=5, text="Display & Save \nhistory", fg="green",
                       command=lambda: display_history())
-view_file.pack(side='left')
+view_file.pack(side='left', expand=True)
 
-upload_file = tk.Button(app, width=15, height=5, text="Upload file to Drive", fg="green",
-                        command=lambda: upload2drive())
-upload_file.pack(side='right')
+keyboard_control = {'Up': 'Up', 'l': 'Like', 'L': 'Like', 'Down': 'Down'}
+
+
+def show_keyboard(event):
+    key_ = event.keysym
+    # print("You pressed: " + key_)
+    keyboard.config(text=key_)
+    if key_ in keyboard_control.keys():
+        press_button(keyboard_control[key_])
+
+
+app.bind("<Key>", show_keyboard)
+keyboard = tk.Label(app, width=15, height=5, font=("Helvetica", 20))
+keyboard.pack(side='right')
 
 app.mainloop()
