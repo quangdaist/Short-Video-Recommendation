@@ -10,9 +10,9 @@ import tkinter as tk
 # from selenium_stealth import stealth
 import time
 import os
+import sys
 from datetime import datetime
 import getpass
-
 # import subprocess
 
 options = webdriver.ChromeOptions()
@@ -63,6 +63,7 @@ def press_button(button):
     global time_swift
     global like
     global action
+    global driver
 
     flag = False
     if button == 'Up':
@@ -73,28 +74,17 @@ def press_button(button):
         ele = '//*[@id="app"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[1]/div[1]/button[1]'
         like = 1
         flag = True
-    old_time = time.time()
 
     try:
-        button_ele = driver.find_element(By.XPATH, ele)
-        action.move_to_element(button_ele).click().perform()
         if not flag:
-            time_swift = old_time
+            time_swift = time.time()
             record_history()
             like = 0
+        button_ele = driver.find_element(By.XPATH, ele)
+        action.move_to_element(button_ele).click().perform()
     except:
         pass
 
-    # try:
-    #     button_ele = driver.find_element(By.XPATH, ele)
-    #     action.move_to_element(button_ele).click().perform()
-    #     if not flag:
-    #         time_swift = old_time
-    #         record_history()
-    #         like = 0
-    #
-    # except:
-    #     print("Input invalid!!!")
 
 
 def record_history():
@@ -122,9 +112,7 @@ def record_history():
     results = [url_vid, desc_vid, like_count, cmt_count, like, time_container, time_swift]
 
     history.append(results)
-    # print(results)
-    print(time_container)
-    # return results
+    print([url_vid[40:61], desc_vid[:10], like_count, cmt_count, like, time_container, time_swift])
 
 
 def get_random_string(length):
@@ -161,9 +149,6 @@ app = tk.Tk()
 app.geometry('250x400')
 app.wm_title("TikTok label")
 
-# time_clock = tk.Label(app, text=f"{time_now}")
-# time_clock.pack(expand=True)
-# app.after(1000, update_time)
 
 logged_in_button = tk.Button(app, width=25, height=5, text="Log in ?", bg="white",
                              fg='red', command=lambda: is_logged_in())
