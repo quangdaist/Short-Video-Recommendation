@@ -12,6 +12,7 @@ import time
 import os
 from datetime import datetime
 import getpass
+
 # import subprocess
 
 options = webdriver.ChromeOptions()
@@ -33,8 +34,16 @@ driver = webdriver.Chrome(options=options, executable_path='chromedriver.exe')
 
 URL = "https://www.tiktok.com/foryou?is_copy_url=1&is_from_webapp=v1"
 driver.get(URL)
-# time.sleep(3)
-input('Press Enter after you\'ve logged in')
+
+# only pause the script in the first time
+time.sleep(3)
+try:
+    _ = driver.find_element(By.XPATH, '//*[@id="app"]/div[1]/div/div[2]/button')
+except:
+    pass
+else:
+    input('Press Enter after you\'ve logged in')
+
 # create action chain object
 action = ActionChains(driver)
 first_vid_ele = driver.find_element(By.XPATH,
