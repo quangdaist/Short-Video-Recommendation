@@ -133,7 +133,8 @@ def display_history():
         user_name = getpass.getuser()
         df['user'] = [user_name] * len(df)
         file_name = get_random_string(20)
-        df.to_csv(f'{file_name}.csv', index=False)
+        file_path = f"raw/{file_name}.csv"
+        df.to_csv(file_path, index=False)
         print(df)
 
 
