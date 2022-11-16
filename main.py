@@ -102,7 +102,7 @@ def record_history():
     ele_time_container = driver.find_element(By.XPATH, '//*[@id="app"]/div[2]/div[3]/div[1]/div[2]/div[2]')
     # like = driver.find_element(By.XPATH,
     #                            '//*[@id="app"]/div[2]/div[3]/div[2]/div[2]/div[2]/div[1]/div[1]/button[1]/span/svg')
-    action.move_to_element(ele_time_container).click().perform()
+    action.move_to_element(ele_time_container).perform()
     time_container = ele_time_container.text
 
     while not time_container:
@@ -130,6 +130,7 @@ def display_history():
     cols = ['url', 'desc_video', 'like_count', 'comment_count', 'like', 'time_container', 'timestamp']
     df = pd.DataFrame(history, columns=cols)
     if not df.empty:
+        history = list()
         user_name = getpass.getuser()
         df['user'] = [user_name] * len(df)
         file_name = get_random_string(20)
