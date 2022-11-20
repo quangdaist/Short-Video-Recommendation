@@ -1,0 +1,4 @@
+*.xml
+*.iml
+.main.py.un~
+/User Data/
