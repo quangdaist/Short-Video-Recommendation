@@ -2,3 +2,6 @@
 *.iml
 .main.py.un~
 /User Data/
+.idea
+User Data/
+venv
