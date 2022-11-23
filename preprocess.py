@@ -126,7 +126,7 @@ for file in cleaned_files:
             input_row['t1_num_comments'] = df.iloc[i*5+10+t]['comment_count']
             # output
             input_row['p_like'] = df.iloc[i*5+10+t]['like']
-            input_row['p_has_next'] = (i*5+10+t == df.shape[0]-3) * 1
+            input_row['p_has_next'] = (i*5+10+t != df.shape[0]-3) * 1
             input_row['p_effective_view'] = (df.iloc[i*5+10+t]['watched_time'] > 5) * 1
 
             input_df = pd.concat([input_df, input_row], axis=0, ignore_index=True)
