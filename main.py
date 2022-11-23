@@ -134,6 +134,9 @@ def display_history():
         user_name = getpass.getuser()
         df['user'] = [user_name] * len(df)
         file_name = get_random_string(20)
+        is_exist_raw = os.path.exists('./raw')
+        if not is_exist_raw:
+            os.mkdir('./raw')
         file_path = f"raw/{file_name}.csv"
         df.to_csv(file_path, index=False)
         print(df)
