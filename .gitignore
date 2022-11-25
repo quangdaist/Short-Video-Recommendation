@@ -3,8 +3,10 @@
 .main.py.un~
 /User Data/
 .idea
-User Data/
 venv
-/main.exe
-/raw/1668931280.4517448_1668931184.651849_mirigpfbwwrrajhbkohh.csv
-/raw/sample_data.csv
+/raw
+/model_output
+/input
+/cleaned
+/word2vec_model
+.vscode
