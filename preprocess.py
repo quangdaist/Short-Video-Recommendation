@@ -96,6 +96,7 @@ input_row = pd.DataFrame(columns=[
 num_watched_videos = 10
 num_ord_candidates = 4
 num_recommend = 5
+num_candidates = 7
 for file in cleaned_files:
     f_name = file.replace(f'{args.cleaned}\\', '')
     df = pd.read_csv(file, encoding='utf-8')
@@ -120,14 +121,16 @@ for file in cleaned_files:
                 input_row[f'c{k+1}_duration'] = df.iloc[i*5+10+k]['video_time'] * (t > k)
                 input_row[f'c{k+1}_num_likes'] = df.iloc[i*5+10+k]['like_count'] * (t > k)
                 input_row[f'c{k+1}_num_comments'] = df.iloc[i*5+10+k]['comment_count'] * (t > k)
-            # target video
-            input_row['t1_duration'] = df.iloc[i*5+10+t]['video_time']
-            input_row['t1_num_likes'] = df.iloc[i*5+10+t]['like_count']
-            input_row['t1_num_comments'] = df.iloc[i*5+10+t]['comment_count']
-            # output
-            input_row['p_like'] = df.iloc[i*5+10+t]['like']
-            input_row['p_has_next'] = (i*5+10+t != df.shape[0]-3) * 1
-            input_row['p_effective_view'] = (df.iloc[i*5+10+t]['watched_time'] > 5) * 1
 
-            input_df = pd.concat([input_df, input_row], axis=0, ignore_index=True)
+            for l in range(7-t):
+                # target video
+                input_row['t1_duration'] = df.iloc[i*5+10+l]['video_time']
+                input_row['t1_num_likes'] = df.iloc[i*5+10+l]['like_count']
+                input_row['t1_num_comments'] = df.iloc[i*5+10+l]['comment_count']
+                # output
+                input_row['p_like'] = df.iloc[i*5+10+l]['like']
+                input_row['p_has_next'] = (i*5+10+l != df.shape[0]-3) * 1
+                input_row['p_effective_view'] = (df.iloc[i*5+10+l]['watched_time'] > 5) * 1
+
+                input_df = pd.concat([input_df, input_row], axis=0, ignore_index=True)
     input_df.to_csv(f'{args.input}/input_{f_name}', index=False)
