@@ -134,3 +134,31 @@ for file in cleaned_files:
 
                 input_df = pd.concat([input_df, input_row], axis=0, ignore_index=True)
     input_df.to_csv(f'{args.input}/input_{f_name}', index=False)
+
+# Merge input files
+input_files = glob.glob(f'{args.input}/*.csv')
+merged_df = pd.DataFrame(columns=[
+    'uid', \
+    'w1_duration', 'w1_num_likes', 'w1_num_comments', 'w1_watched_time', 'w1_like', \
+    'w2_duration', 'w2_num_likes', 'w2_num_comments', 'w2_watched_time', 'w2_like', \
+    'w3_duration', 'w3_num_likes', 'w3_num_comments', 'w3_watched_time', 'w3_like', \
+    'w4_duration', 'w4_num_likes', 'w4_num_comments', 'w4_watched_time', 'w4_like', \
+    'w5_duration', 'w5_num_likes', 'w5_num_comments', 'w5_watched_time', 'w5_like', \
+    'w6_duration', 'w6_num_likes', 'w6_num_comments', 'w6_watched_time', 'w6_like', \
+    'w7_duration', 'w7_num_likes', 'w7_num_comments', 'w7_watched_time', 'w7_like', \
+    'w8_duration', 'w8_num_likes', 'w8_num_comments', 'w8_watched_time', 'w8_like', \
+    'w9_duration', 'w9_num_likes', 'w9_num_comments', 'w9_watched_time', 'w9_like', \
+    'w10_duration', 'w10_num_likes', 'w10_num_comments', 'w10_watched_time', 'w10_like', \
+    'c1_duration', 'c1_num_likes', 'c1_num_comments', \
+    'c2_duration', 'c2_num_likes', 'c2_num_comments', \
+    'c3_duration', 'c3_num_likes', 'c3_num_comments', \
+    'c4_duration', 'c4_num_likes', 'c4_num_comments', \
+    't1_duration', 't1_num_likes', 't1_num_comments', \
+    'p_like', 'p_has_next', 'p_effective_view'
+])
+
+for file in input_files:
+    input_df = pd.read_csv(file, encoding='utf-8')
+    merged_df = pd.concat([merged_df, input_df])
+
+merged_df.to_csv(f'{args.input}/final.csv', index=False)
