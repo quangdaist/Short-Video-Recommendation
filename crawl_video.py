@@ -1,4 +1,4 @@
-# python crawl_video.py -u_p './videos/list_url.txt' -dest './videos' -vid 1 -thumb 1
+# python crawl_video.py -u_p './raw' -dest './videos' -vid 1 -thumb 1
 import requests
 import json
 from urllib.request import urlretrieve
@@ -8,10 +8,22 @@ import pandas as pd
 import numpy as np
 
 
+def read_file(file_name):
+    df = pd.read_csv(file_name)
+    url = df['url'].to_list()
+    return url
+
 def load_url_file(url_path):
-    with open(url_path, encoding='utf8') as f:
-        lines = f.readlines()
-    return lines
+    if os.path.isfile(url_path):
+        return read_file(url_path)
+
+    if os.path.isdir(url_path):
+        results = []
+        dirnames = os.listdir(url_path)
+        for dir in dirnames:
+            path = os.path.join(url_path, dir)
+            results += read_file(path)
+        return results
 
 
 def create_direction(path):
