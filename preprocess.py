@@ -1,4 +1,4 @@
-# python preprocess.py -r ./raw -c ./cleaned -i ./input
+# python preprocess.py -r ./raw -c ./cleaned -i ./input -s
 
 import pandas as pd
 import argparse
@@ -66,58 +66,33 @@ def do(num_watched_videos, for_server=False):
 
     # # Merge cleaned files
     # cleaned_files = glob.glob(f'{args.cleaned}/*.csv')
-    # merged_df = pd.DataFrame(columns=[
+    # merged_train_df = pd.DataFrame(columns=[
     #     'url','desc_video','like_count','comment_count','like','video_time','watched_time','user'
     # ])
 
     # for file in cleaned_files:
     #     cleaned_df = pd.read_csv(file, encoding='utf-8')
-    #     merged_df = pd.concat([merged_df, cleaned_df])
+    #     merged_train_df = pd.concat([merged_train_df, cleaned_df])
 
-    # merged_df.to_csv(f'{args.cleaned}/final.csv', index=False)
+    # merged_train_df.to_csv(f'{args.cleaned}/final.csv', index=False)
 
     # Create input files from cleaned files
     cleaned_files = glob.glob(f'{args.cleaned}/*.csv')
-    input_df = pd.DataFrame(columns=[
-        'uid', \
-        'w1_duration', 'w1_num_likes', 'w1_num_comments', 'w1_watched_time', 'w1_like', \
-        'w2_duration', 'w2_num_likes', 'w2_num_comments', 'w2_watched_time', 'w2_like', \
-        'w3_duration', 'w3_num_likes', 'w3_num_comments', 'w3_watched_time', 'w3_like', \
-        'w4_duration', 'w4_num_likes', 'w4_num_comments', 'w4_watched_time', 'w4_like', \
-        'w5_duration', 'w5_num_likes', 'w5_num_comments', 'w5_watched_time', 'w5_like', \
-        'w6_duration', 'w6_num_likes', 'w6_num_comments', 'w6_watched_time', 'w6_like', \
-        'w7_duration', 'w7_num_likes', 'w7_num_comments', 'w7_watched_time', 'w7_like', \
-        'w8_duration', 'w8_num_likes', 'w8_num_comments', 'w8_watched_time', 'w8_like', \
-        'w9_duration', 'w9_num_likes', 'w9_num_comments', 'w9_watched_time', 'w9_like', \
-        'wnum_watched_videos_duration', 'wnum_watched_videos_num_likes', 'wnum_watched_videos_num_comments', 'wnum_watched_videos_watched_time', 'wnum_watched_videos_like', \
-        'c1_duration', 'c1_num_likes', 'c1_num_comments', \
-        'c2_duration', 'c2_num_likes', 'c2_num_comments', \
-        'c3_duration', 'c3_num_likes', 'c3_num_comments', \
-        'c4_duration', 'c4_num_likes', 'c4_num_comments', \
-        't1_duration', 't1_num_likes', 't1_num_comments', \
-        'p_like', 'p_has_next', 'p_effective_view'
-    ])
-    input_row = pd.DataFrame(columns=[
-                'uid', \
-                'w1_duration', 'w1_num_likes', 'w1_num_comments', 'w1_watched_time', 'w1_like', \
-                'w2_duration', 'w2_num_likes', 'w2_num_comments', 'w2_watched_time', 'w2_like', \
-                'w3_duration', 'w3_num_likes', 'w3_num_comments', 'w3_watched_time', 'w3_like', \
-                'w4_duration', 'w4_num_likes', 'w4_num_comments', 'w4_watched_time', 'w4_like', \
-                'w5_duration', 'w5_num_likes', 'w5_num_comments', 'w5_watched_time', 'w5_like', \
-                'w6_duration', 'w6_num_likes', 'w6_num_comments', 'w6_watched_time', 'w6_like', \
-                'w7_duration', 'w7_num_likes', 'w7_num_comments', 'w7_watched_time', 'w7_like', \
-                'w8_duration', 'w8_num_likes', 'w8_num_comments', 'w8_watched_time', 'w8_like', \
-                'w9_duration', 'w9_num_likes', 'w9_num_comments', 'w9_watched_time', 'w9_like', \
-                'wnum_watched_videos_duration', 'wnum_watched_videos_num_likes', 'wnum_watched_videos_num_comments', 'wnum_watched_videos_watched_time', 'wnum_watched_videos_like', \
-                'c1_duration', 'c1_num_likes', 'c1_num_comments', \
-                'c2_duration', 'c2_num_likes', 'c2_num_comments', \
-                'c3_duration', 'c3_num_likes', 'c3_num_comments', \
-                'c4_duration', 'c4_num_likes', 'c4_num_comments', \
-                't1_duration', 't1_num_likes', 't1_num_comments', \
-                'p_like', 'p_has_next', 'p_effective_view'
-            ])
 
     for file in cleaned_files:
+        input_df = pd.DataFrame(columns=['uid', \
+            *[f'w{j}_{i}' for j in range(1, num_watched_videos+1) for i in ['duration', 'num_likes', 'num_comments', 'watched_time', 'like'] ], \
+            *[f'c{j}_{i}' for j in range(1, num_ord_candidates+1) for i in ['duration', 'num_likes', 'num_comments'] ], \
+            't1_duration', 't1_num_likes', 't1_num_comments', \
+            'p_like', 'p_has_next', 'p_effective_view'      
+            ])
+        input_row = pd.DataFrame(columns=['uid', \
+            *[f'w{j}_{i}' for j in range(1, num_watched_videos+1) for i in ['duration', 'num_likes', 'num_comments', 'watched_time', 'like'] ], \
+            *[f'c{j}_{i}' for j in range(1, num_ord_candidates+1) for i in ['duration', 'num_likes', 'num_comments'] ], \
+            't1_duration', 't1_num_likes', 't1_num_comments', \
+            'p_like', 'p_has_next', 'p_effective_view'      
+            ])
+            
         f_name = file.replace(f'{args.cleaned}\\', '')
         df = pd.read_csv(file, encoding='utf-8')
         slide_time = (df.shape[0] >= (num_watched_videos+num_candidates))*(1 + ((df.shape[0]-(num_watched_videos+num_candidates)) // 5))
@@ -153,38 +128,48 @@ def do(num_watched_videos, for_server=False):
                     input_row['p_effective_view'] = (df.iloc[i*5+num_watched_videos+l]['watched_time'] > 5) * 1
 
                     input_df = pd.concat([input_df, input_row], axis=0, ignore_index=True)
-        input_df.to_csv(f'{args.input}/input_{f_name}', index=False)
 
-    # Merge input files
-    input_files = glob.glob(f'{args.input}/*.csv')
-    merged_df = pd.DataFrame(columns=[
-        'uid', \
-        'w1_duration', 'w1_num_likes', 'w1_num_comments', 'w1_watched_time', 'w1_like', \
-        'w2_duration', 'w2_num_likes', 'w2_num_comments', 'w2_watched_time', 'w2_like', \
-        'w3_duration', 'w3_num_likes', 'w3_num_comments', 'w3_watched_time', 'w3_like', \
-        'w4_duration', 'w4_num_likes', 'w4_num_comments', 'w4_watched_time', 'w4_like', \
-        'w5_duration', 'w5_num_likes', 'w5_num_comments', 'w5_watched_time', 'w5_like', \
-        'w6_duration', 'w6_num_likes', 'w6_num_comments', 'w6_watched_time', 'w6_like', \
-        'w7_duration', 'w7_num_likes', 'w7_num_comments', 'w7_watched_time', 'w7_like', \
-        'w8_duration', 'w8_num_likes', 'w8_num_comments', 'w8_watched_time', 'w8_like', \
-        'w9_duration', 'w9_num_likes', 'w9_num_comments', 'w9_watched_time', 'w9_like', \
-        'wnum_watched_videos_duration', 'wnum_watched_videos_num_likes', 'wnum_watched_videos_num_comments', 'wnum_watched_videos_watched_time', 'wnum_watched_videos_like', \
-        'c1_duration', 'c1_num_likes', 'c1_num_comments', \
-        'c2_duration', 'c2_num_likes', 'c2_num_comments', \
-        'c3_duration', 'c3_num_likes', 'c3_num_comments', \
-        'c4_duration', 'c4_num_likes', 'c4_num_comments', \
+        idx = (int(input_df.shape[0] * 0.8) // 25) * 25 
+        train_df = input_df.iloc[:idx]
+        test_df = input_df.iloc[idx:]
+        train_df.to_csv(f'{args.input}/train_{f_name}', index=False)
+        test_df.to_csv(f'{args.input}/test_{f_name}', index=False)
+
+    # Merge train files
+    train_files = glob.glob(f'{args.input}/train_*.csv')
+    merged_train_df = pd.DataFrame(columns=['uid', \
+        *[f'w{j}_{i}' for j in range(1, num_watched_videos+1) for i in ['duration', 'num_likes', 'num_comments', 'watched_time', 'like'] ], \
+        *[f'c{j}_{i}' for j in range(1, num_ord_candidates+1) for i in ['duration', 'num_likes', 'num_comments'] ], \
         't1_duration', 't1_num_likes', 't1_num_comments', \
-        'p_like', 'p_has_next', 'p_effective_view'
-    ])
+        'p_like', 'p_has_next', 'p_effective_view'      
+        ])
 
-    for file in input_files:
+    for file in train_files:
         input_df = pd.read_csv(file, encoding='utf-8')
-        merged_df = pd.concat([merged_df, input_df])
+        merged_train_df = pd.concat([merged_train_df, input_df])
 
     if not for_server:
-        merged_df.to_csv(f'{args.input}/final.csv', index=False)
+        merged_train_df.to_csv(f'{args.input}/final_train.csv', index=False)
     else:
-        merged_df.to_csv(f'{args.input}/server_final.csv', index=False)
+        merged_train_df.to_csv(f'{args.input}/server_final_train.csv', index=False)
+    
+    # Merge test files
+    test_files = glob.glob(f'{args.input}/test_*.csv')
+    merged_test_df = pd.DataFrame(columns=['uid', \
+        *[f'w{j}_{i}' for j in range(1, num_watched_videos+1) for i in ['duration', 'num_likes', 'num_comments', 'watched_time', 'like'] ], \
+        *[f'c{j}_{i}' for j in range(1, num_ord_candidates+1) for i in ['duration', 'num_likes', 'num_comments'] ], \
+        't1_duration', 't1_num_likes', 't1_num_comments', \
+        'p_like', 'p_has_next', 'p_effective_view'      
+        ])
+
+    for file in test_files:
+        input_df = pd.read_csv(file, encoding='utf-8')
+        merged_test_df = pd.concat([merged_test_df, input_df])
+
+    if not for_server:
+        merged_test_df.to_csv(f'{args.input}/final_test.csv', index=False)
+    else:
+        merged_test_df.to_csv(f'{args.input}/server_final_test.csv', index=False)
 
 
 do(10)
