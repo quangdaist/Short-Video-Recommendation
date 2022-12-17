@@ -110,33 +110,61 @@ def do(num_watched_videos, for_server=False):
                 input_row[f'w{j+1}_watched_time'] = df.iloc[i*5+j]['watched_time']
                 input_row[f'w{j+1}_like'] = df.iloc[i*5+j]['like']
             
-            for t in range(num_recommend):
+            for t in range(num_candidates):
                 # ordered candidates
                 for k in range(num_ord_candidates):
-                    input_row[f'c{k+1}_duration'] = df.iloc[i*5+num_watched_videos+k]['video_time'] * (t > k)
-                    input_row[f'c{k+1}_num_likes'] = df.iloc[i*5+num_watched_videos+k]['like_count'] * (t > k)
-                    input_row[f'c{k+1}_num_comments'] = df.iloc[i*5+num_watched_videos+k]['comment_count'] * (t > k)
+                    input_row[f'c{k+1}_duration'] = df.iloc[i*5+num_watched_videos+k+(t%num_ord_candidates)*(t>num_ord_candidates)]['video_time'] * (t > k)
+                    input_row[f'c{k+1}_num_likes'] = df.iloc[i*5+num_watched_videos+k+(t%num_ord_candidates)*(t>num_ord_candidates)]['like_count'] * (t > k)
+                    input_row[f'c{k+1}_num_comments'] = df.iloc[i*5+num_watched_videos+k+(t%num_ord_candidates)*(t>num_ord_candidates)]['comment_count'] * (t > k)
 
-                for l in range(7-t):
-                    # target video
-                    input_row['t1_duration'] = df.iloc[i*5+num_watched_videos+l]['video_time']
-                    input_row['t1_num_likes'] = df.iloc[i*5+num_watched_videos+l]['like_count']
-                    input_row['t1_num_comments'] = df.iloc[i*5+num_watched_videos+l]['comment_count']
-                    # output
-                    input_row['p_like'] = df.iloc[i*5+num_watched_videos+l]['like']
-                    input_row['p_has_next'] = (i*5+num_watched_videos+l != df.shape[0]-3) * 1
-                    input_row['p_effective_view'] = (df.iloc[i*5+num_watched_videos+l]['watched_time'] > 5) * 1
+                # target video
+                input_row['t1_duration'] = df.iloc[i*5+num_watched_videos+t]['video_time']
+                input_row['t1_num_likes'] = df.iloc[i*5+num_watched_videos+t]['like_count']
+                input_row['t1_num_comments'] = df.iloc[i*5+num_watched_videos+t]['comment_count']
+                # output
+                input_row['p_like'] = df.iloc[i*5+num_watched_videos+t]['like']
+                input_row['p_has_next'] = (i*5+num_watched_videos+t != df.shape[0]-3) * 1
+                input_row['p_effective_view'] = (df.iloc[i*5+num_watched_videos+t]['watched_time'] > 5) * 1
 
-                    input_df = pd.concat([input_df, input_row], axis=0, ignore_index=True)
+                input_df = pd.concat([input_df, input_row], axis=0, ignore_index=True)
+                # t=0: -> 0              -> t1=video11
+                # t=1: k=0 -> c1=video11 -> t1=video12
+                # t=2: k=0 -> c1=video11
+                #      k=1 -> c2=video12 -> t1=video13
+                # t=3: k=0 -> c1=video11
+                #      k=1 -> c2=video12
+                #      k=2 -> c3=video13 -> t1=video14
+                # t=4: k=0 -> c1=video11
+                #      k=1 -> c2=video12
+                #      k=2 -> c3=video13
+                #      k=3 -> c4=video14 -> t1=video15
+                # t=5: k=0 -> c1=video12
+                #      k=1 -> c2=video13
+                #      k=2 -> c3=video14
+                #      k=3 -> c4=video15 -> t1=video16
+                # t=6: k=0 -> c1=video13
+                #      k=1 -> c2=video14
+                #      k=2 -> c3=video15
+                #      k=3 -> c4=video16 -> t1=video17
 
-        idx = (int(input_df.shape[0] * 0.8) // 25) * 25 
+        idx = (int(input_df.shape[0] * 0.8) // 7) * 7
         train_df = input_df.iloc[:idx]
         test_df = input_df.iloc[idx:]
-        train_df.to_csv(f'{args.input}/train_{f_name}', index=False)
-        test_df.to_csv(f'{args.input}/test_{f_name}', index=False)
+        if not for_server:
+            train_df.to_csv(f'{args.input}/train_{f_name}', index=False)
+            test_df.to_csv(f'{args.input}/test_{f_name}', index=False)
+        else:
+            train_df.to_csv(f'{args.input}/server_train_{f_name}', index=False)
+            test_df.to_csv(f'{args.input}/server_test_{f_name}', index=False)
 
+    
+    if not for_server:
+        train_files = glob.glob(f'{args.input}/train_*.csv')
+        test_files = glob.glob(f'{args.input}/test_*.csv')
+    else:
+        train_files = glob.glob(f'{args.input}/server_train_*.csv')
+        test_files = glob.glob(f'{args.input}/server_test_*.csv')
     # Merge train files
-    train_files = glob.glob(f'{args.input}/train_*.csv')
     merged_train_df = pd.DataFrame(columns=['uid', \
         *[f'w{j}_{i}' for j in range(1, num_watched_videos+1) for i in ['duration', 'num_likes', 'num_comments', 'watched_time', 'like'] ], \
         *[f'c{j}_{i}' for j in range(1, num_ord_candidates+1) for i in ['duration', 'num_likes', 'num_comments'] ], \
