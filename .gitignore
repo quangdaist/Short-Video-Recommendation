@@ -10,3 +10,4 @@ venv
 /cleaned
 /word2vec_model
 .vscode
+/videos
