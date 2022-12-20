@@ -13,6 +13,7 @@ import os
 import sys
 from datetime import datetime
 import getpass
+
 # import subprocess
 
 options = webdriver.ChromeOptions()
@@ -86,7 +87,6 @@ def press_button(button):
         pass
 
 
-
 def record_history():
     global time_swift
     global history
@@ -134,9 +134,9 @@ def display_history():
         user_name = getpass.getuser()
         df['user'] = [user_name] * len(df)
         file_name = get_random_string(20)
-        is_exist_raw = os.path.exists('./raw')
+        is_exist_raw = os.path.exists('../dataset/raw')
         if not is_exist_raw:
-            os.mkdir('./raw')
+            os.mkdir('../dataset/raw')
         file_path = f"raw/{file_name}.csv"
         df.to_csv(file_path, index=False)
         print(df)
@@ -153,7 +153,6 @@ like = 0
 app = tk.Tk()
 app.geometry('250x400')
 app.wm_title("TikTok label")
-
 
 logged_in_button = tk.Button(app, width=25, height=5, text="Log in ?", bg="white",
                              fg='red', command=lambda: is_logged_in())

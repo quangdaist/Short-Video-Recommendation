@@ -4,10 +4,10 @@
 /User Data/
 .idea
 venv
-/raw
+/dataset/raw
 /model_output
-/input
-/cleaned
+/dataset/input
+/dataset/cleaned
 /word2vec_model
 .vscode
 /videos

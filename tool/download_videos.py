@@ -1,4 +1,4 @@
-# python crawl_video.py -u_p './raw' -dest './videos' -thumb True
+# python download_videos.py -u_p './raw' -dest './videos' -thumb True
 import time
 import requests
 from requests.adapters import HTTPAdapter, Retry
