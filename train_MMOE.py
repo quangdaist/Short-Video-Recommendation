@@ -18,7 +18,7 @@ columns = ["uid", "w1_duration", "w1_num_likes", "w1_num_comments", "w1_watched_
            "w10_num_likes", "w10_num_comments", "w10_watched_time", "w10_like", "c1_duration", "c1_num_likes", "c1_num_comments", "c2_duration", "c2_num_likes", "c2_num_comments", "c3_duration", "c3_num_likes", "c3_num_comments", "c4_duration", "c4_num_likes", "c4_num_comments", "t1_duration", "t1_num_likes", "t1_num_comments", "p_like", "p_has_next", "p_effective_view"]
 
 df_train = pd.read_csv('dataset/final_input/final_train.csv', header=0)
-df_test = pd.read_csv('dataset/final_input/final_test', header=0)
+df_test = pd.read_csv('dataset/final_input/final_test.csv', header=0)
 
 df_train = df_train.drop(['uid'], axis=1)
 df_test = df_test.drop(['uid'], axis=1)
