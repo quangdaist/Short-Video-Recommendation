@@ -5,9 +5,9 @@
 .idea
 venv
 /dataset/raw
-/model_output
 /dataset/input
 /dataset/cleaned
 /word2vec_model
 .vscode
-/videos
+/videos!/.vscode/
+!/.ipynb_checkpoints/

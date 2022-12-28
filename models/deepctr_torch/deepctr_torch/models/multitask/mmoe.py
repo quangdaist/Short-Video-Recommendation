@@ -13,7 +13,6 @@ from ..basemodel import BaseModel
 from ...inputs import combined_dnn_input
 from ...layers import DNN, PredictionLayer
 import rtdl
-from dataclasses import asdict, dataclass, field
 import math
 import time
 from copy import deepcopy
@@ -77,20 +76,20 @@ class AutoDis(nn.Module):
     ) -> None:
         super().__init__()
         self.first_layer = rtdl.NumericalFeatureTokenizer(
-                n_features,
-                options.n_meta_embeddings,
-                False,
-                'uniform',
+            n_features,
+            options.n_meta_embeddings,
+            False,
+            'uniform',
         )
         self.leaky_relu = nn.LeakyReLU()
         self.second_layer = NLinear(
-                n_features, options.n_meta_embeddings, options.n_meta_embeddings, False
+            n_features, options.n_meta_embeddings, options.n_meta_embeddings, False
         )
         self.softmax = nn.Softmax(-1)
         self.temperature = options.temperature
         # "meta embeddings" from the paper are just a linear layer
         self.third_layer = NLinear(
-                n_features, options.n_meta_embeddings, d_embedding, False
+            n_features, options.n_meta_embeddings, d_embedding, False
         )
         # 0.01 is taken from the source code
         nn.init.uniform_(self.third_layer.weight, 0.01)
@@ -128,10 +127,10 @@ class MMOE(BaseModel):
     :return: A PyTorch model instance.
     """
 
-    def __init__(self, dnn_feature_columns, num_experts=3, expert_dnn_hidden_units=(64, ),
-                 gate_dnn_hidden_units=(64,), tower_dnn_hidden_units=(128, 64, 32, 1), l2_reg_linear=0.00001,
+    def __init__(self, dnn_feature_columns, num_experts=3, expert_dnn_hidden_units=(256, 128),
+                 gate_dnn_hidden_units=(64,), tower_dnn_hidden_units=(64,), l2_reg_linear=0.00001,
                  l2_reg_embedding=0.00001, l2_reg_dnn=0,
-                 init_std=0.0001, seed=1024, dnn_dropout=0.3, dnn_activation='relu', dnn_use_bn=False,
+                 init_std=0.0001, seed=1024, dnn_dropout=0, dnn_activation='relu', dnn_use_bn=False,
                  task_types=('binary', 'binary'), task_names=('ctr', 'ctcvr'), device='cpu', gpus=None,
                  use_autodis=False, use_transformers=False):
         super(MMOE, self).__init__(linear_feature_columns=[], dnn_feature_columns=dnn_feature_columns,
@@ -191,32 +190,32 @@ class MMOE(BaseModel):
                                                l2_reg=l2_reg_dnn, dropout_rate=dnn_dropout, use_bn=dnn_use_bn,
                                                init_std=init_std, device=device) for _ in range(self.num_tasks)])
             self.add_regularization_weight(
-                    filter(lambda x: 'weight' in x[0] and 'bn' not in x[0], self.gate_dnn.named_parameters()),
-                    l2=l2_reg_dnn)
+                filter(lambda x: 'weight' in x[0] and 'bn' not in x[0], self.gate_dnn.named_parameters()),
+                l2=l2_reg_dnn)
         self.gate_dnn_final_layer = nn.ModuleList(
-                [nn.Linear(gate_dnn_hidden_units[-1] if len(gate_dnn_hidden_units) > 0 else self.input_dim,
-                           self.num_experts, bias=False) for _ in range(self.num_tasks)])
+            [nn.Linear(gate_dnn_hidden_units[-1] if len(gate_dnn_hidden_units) > 0 else self.input_dim,
+                       self.num_experts, bias=False) for _ in range(self.num_tasks)])
 
         # tower dnn (task-specific)
         if len(tower_dnn_hidden_units) > 0:
             self.tower_dnn = nn.ModuleList(
-                    [DNN(expert_dnn_hidden_units[-1], tower_dnn_hidden_units, activation=dnn_activation,
-                         l2_reg=l2_reg_dnn, dropout_rate=dnn_dropout, use_bn=dnn_use_bn,
-                         init_std=init_std, device=device) for _ in range(self.num_tasks)])
+                [DNN(expert_dnn_hidden_units[-1], tower_dnn_hidden_units, activation=dnn_activation,
+                     l2_reg=l2_reg_dnn, dropout_rate=dnn_dropout, use_bn=dnn_use_bn,
+                     init_std=init_std, device=device) for _ in range(self.num_tasks)])
             self.add_regularization_weight(
-                    filter(lambda x: 'weight' in x[0] and 'bn' not in x[0], self.tower_dnn.named_parameters()),
-                    l2=l2_reg_dnn)
+                filter(lambda x: 'weight' in x[0] and 'bn' not in x[0], self.tower_dnn.named_parameters()),
+                l2=l2_reg_dnn)
         self.tower_dnn_final_layer = nn.ModuleList([nn.Linear(
-                tower_dnn_hidden_units[-1] if len(tower_dnn_hidden_units) > 0 else expert_dnn_hidden_units[-1], 1,
-                bias=False)
-                for _ in range(self.num_tasks)])
+            tower_dnn_hidden_units[-1] if len(tower_dnn_hidden_units) > 0 else expert_dnn_hidden_units[-1], 1,
+            bias=False)
+            for _ in range(self.num_tasks)])
 
         self.out = nn.ModuleList([PredictionLayer(task) for task in task_types])
 
         regularization_modules = [self.expert_dnn, self.gate_dnn_final_layer, self.tower_dnn_final_layer]
         for module in regularization_modules:
             self.add_regularization_weight(
-                    filter(lambda x: 'weight' in x[0] and 'bn' not in x[0], module.named_parameters()), l2=l2_reg_dnn)
+                filter(lambda x: 'weight' in x[0] and 'bn' not in x[0], module.named_parameters()), l2=l2_reg_dnn)
         self.to(device)
 
     def forward(self, X):
@@ -242,18 +241,24 @@ class MMOE(BaseModel):
                     dense_embedding_input_for_video_i = dense_embedding_input[:, index * 32:(index + 1) * 32]
                     sparse_embedding_input_for_video_i = sparse_embedding_input[:, index * 8: (index + 1) * 8]
                     if watched_list_features is None:
-                        watched_list_features = torch.cat([dense_embedding_input_for_video_i, sparse_embedding_input_for_video_i], dim=1)
+                        watched_list_features = torch.cat(
+                            [dense_embedding_input_for_video_i, sparse_embedding_input_for_video_i], dim=1)
                     else:
-                        watched_list_features = torch.cat([watched_list_features, dense_embedding_input_for_video_i, sparse_embedding_input_for_video_i], dim=1)
+                        watched_list_features = torch.cat([watched_list_features, dense_embedding_input_for_video_i,
+                                                           sparse_embedding_input_for_video_i], dim=1)
 
                 # skip 'uid'
                 ordered_candidates_features = dense_embedding_input[:, -3 * 8 * 5:-3 * 8]
                 target_features = dense_embedding_input[:, -3 * 8:]
 
-                watched_list_attn_output, attn_output_weights = self.watched_list_multihead_attn(target_features, watched_list_features, watched_list_features)
-                ordered_candidates_attn_output, attn_output_weights = self.ordered_candidates_multihead_attn(target_features, ordered_candidates_features, ordered_candidates_features)
+                watched_list_attn_output, attn_output_weights = self.watched_list_multihead_attn(target_features,
+                                                                                                 watched_list_features,
+                                                                                                 watched_list_features)
+                ordered_candidates_attn_output, attn_output_weights = self.ordered_candidates_multihead_attn(
+                    target_features, ordered_candidates_features, ordered_candidates_features)
 
-                dnn_input = torch.cat([watched_list_attn_output, ordered_candidates_attn_output, target_features], dim=1)
+                dnn_input = torch.cat([watched_list_attn_output, ordered_candidates_attn_output, target_features],
+                                      dim=1)
         else:
             dnn_input = combined_dnn_input(sparse_embedding_list, dense_value_list)
 
