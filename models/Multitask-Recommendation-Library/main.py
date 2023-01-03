@@ -22,11 +22,12 @@ def get_dataset(name, path):
     else:
         return MyDataset(path)
 
+
 def get_model(name, categorical_field_dims, numerical_num, task_num, expert_num, embed_dim):
     """
     Hyperparameters are empirically determined, not opitmized.
     """
-    
+
     if name == 'sharedbottom':
         print("Model: Shared-Bottom")
         return SharedBottomModel(categorical_field_dims, numerical_num, embed_dim=embed_dim, bottom_mlp_dims=(512, 256), tower_mlp_dims=(128, 64), task_num=task_num, dropout=0.2)
@@ -51,6 +52,7 @@ def get_model(name, categorical_field_dims, numerical_num, task_num, expert_num,
     else:
         raise ValueError('unknown model name: ' + name)
 
+
 class EarlyStopper(object):
 
     def __init__(self, num_trials, save_path):
@@ -70,6 +72,7 @@ class EarlyStopper(object):
             return True
         else:
             return False
+
 
 def train(model, optimizer, data_loader, criterion, device, log_interval=100):
     model.train()
@@ -91,6 +94,7 @@ def train(model, optimizer, data_loader, criterion, device, log_interval=100):
             loader.set_postfix(loss=total_loss / log_interval)
             total_loss = 0
 
+
 def metatrain(model, optimizer, data_loader, device, log_interval=100):
     model.train()
     total_loss = 0
@@ -105,7 +109,7 @@ def metatrain(model, optimizer, data_loader, device, log_interval=100):
         list_qry_numerical.append(numerical_fields[batch_size:])
         list_sup_y.append(labels[:batch_size])
         list_qry_y.append(labels[batch_size:])
-        
+
         if (i + 1) % 2 == 0:
             loss = model.global_update(list_sup_categorical, list_sup_numerical, list_sup_y, list_qry_categorical, list_qry_numerical, list_qry_y)
             model.zero_grad()
@@ -116,6 +120,7 @@ def metatrain(model, optimizer, data_loader, device, log_interval=100):
         if (i + 1) % log_interval == 0:
             loader.set_postfix(loss=total_loss / log_interval)
             total_loss = 0
+
 
 def test(model, data_loader, task_num, device):
     model.eval()
@@ -153,8 +158,8 @@ def main(dataset_name,
     print("Getting dataset...")
     # train_dataset = get_dataset(dataset_name, os.path.join(dataset_path, dataset_name) + '/train.csv')
     # test_dataset = get_dataset(dataset_name, os.path.join(dataset_path, dataset_name) + '/test.csv')
-    train_dataset = get_dataset('../dataset/final_input/final_train.csv')
-    test_dataset = get_dataset('../dataset/final_input/final_test.csv')
+    train_dataset = get_dataset('', '../../dataset/final_input/final_train.csv')
+    test_dataset = get_dataset('', '../../dataset/final_input/final_test.csv')
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
     test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=False)
     print("Dataset loaded!")
@@ -166,7 +171,7 @@ def main(dataset_name,
     print("Model loaded!")
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    save_path=f'{save_dir}/{dataset_name}_{model_name}.pt'
+    save_path = f'{save_dir}/{dataset_name}_{model_name}.pt'
     early_stopper = EarlyStopper(num_trials=2, save_path=save_path)
     print("Start training...")
     for epoch_i in range(epoch):
@@ -185,7 +190,7 @@ def main(dataset_name,
 
     model.load_state_dict(torch.load(save_path))
     auc, loss = test(model, test_data_loader, task_num, device)
-    f = open('{}_{}.txt'.format(model_name, dataset_name), 'a', encoding = 'utf-8')
+    f = open('{}_{}.txt'.format(model_name, dataset_name), 'a', encoding='utf-8')
     f.write('learning rate: {}\n'.format(learning_rate))
     for i in range(task_num):
         print('task {}, AUC {}, Log-loss {}'.format(i, auc[i], loss[i]))
@@ -203,7 +208,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_path', default='./data/')
     parser.add_argument('--model_name', default='metaheac', choices=['singletask', 'sharedbottom', 'omoe', 'mmoe', 'ple', 'aitm', 'metaheac'])
     parser.add_argument('--epoch', type=int, default=200)
-    parser.add_argument('--task_num', type=int, default=2)
+    parser.add_argument('--task_num', type=int, default=3)
     parser.add_argument('--expert_num', type=int, default=8)
     parser.add_argument('--learning_rate', type=float, default=0.001)
     parser.add_argument('--batch_size', type=int, default=2048)
