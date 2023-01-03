@@ -11,14 +11,13 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from deepctr_torch.inputs import SparseFeat, DenseFeat, get_feature_names
 from deepctr_torch.models import *
 
-MODEL_PATH = r"C:\Users\MSI I5\PycharmProjects\tabular-dl-num-embeddings\model.pth"
+MODEL_PATH = "model.pth"
 
 columns = ["uid", "w1_duration", "w1_num_likes", "w1_num_comments", "w1_watched_time", "w1_like", "w2_duration", "w2_num_likes", "w2_num_comments", "w2_watched_time", "w2_like", "w3_duration", "w3_num_likes", "w3_num_comments", "w3_watched_time", "w3_like", "w4_duration", "w4_num_likes", "w4_num_comments", "w4_watched_time", "w4_like", "w5_duration", "w5_num_likes", "w5_num_comments",
            "w5_watched_time", "w5_like", "w6_duration", "w6_num_likes", "w6_num_comments", "w6_watched_time", "w6_like", "w7_duration", "w7_num_likes", "w7_num_comments", "w7_watched_time", "w7_like", "w8_duration", "w8_num_likes", "w8_num_comments", "w8_watched_time", "w8_like", "w9_duration", "w9_num_likes", "w9_num_comments", "w9_watched_time", "w9_like", "w10_duration",
            "w10_num_likes", "w10_num_comments", "w10_watched_time", "w10_like", "c1_duration", "c1_num_likes", "c1_num_comments", "c2_duration", "c2_num_likes", "c2_num_comments", "c3_duration", "c3_num_likes", "c3_num_comments", "c4_duration", "c4_num_likes", "c4_num_comments", "t1_duration", "t1_num_likes", "t1_num_comments", "p_like", "p_has_next", "p_effective_view"]
-df_train = pd.read_csv(r'C:\Users\MSI I5\PycharmProjects\tabular-dl-num-embeddings\MMoE\final_train.csv', header=0)
-# df_train = df_train.iloc[:500, :]
-df_test = pd.read_csv(r'C:\Users\MSI I5\PycharmProjects\tabular-dl-num-embeddings\MMoE\final_test.csv', header=0)
+df_train = pd.read_csv('dataset/final_input/final_train.csv', header=0)
+df_test = pd.read_csv('dataset/final_input/final_test.csv', header=0)
 
 df_train = df_train.drop(['uid'], axis=1)
 df_test = df_test.drop(['uid'], axis=1)
@@ -240,3 +239,6 @@ for sliding_window_index in range(num_sliding_windows):
 pred_orders = many_new_candidate_orders
 gt_orders = [[0, 1, 2, 3, 4] for _ in range(num_sliding_windows)]
 df_for_MRR = pd.DataFrame(data={'pred_order': pred_orders, 'gt_order': gt_orders, 'relevant': many_relevant_labels})
+
+##
+
