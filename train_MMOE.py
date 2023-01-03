@@ -1,11 +1,11 @@
 # no autodis
-## python train_MMOE.py -sav_mod "./model_output/no_autodis"
+## python train_MMOE.py -sav_mod "./results/no_autodis"
 # autodis
-## python train_MMOE.py -ad -sav_mod "./model_output/autodis"
+## python train_MMOE.py -ad -sav_mod "./results/autodis"
 # transformer
-## python train_MMOE.py -tx -sav_mod "./model_output/transformer"
+## python train_MMOE.py -tx -sav_mod "./results/transformer"
 # autodis + transformer
-## python train_MMOE.py -ad -tx -sav_mod "./model_output/autodis_tranformer"
+## python train_MMOE.py -ad -tx -sav_mod "./results/autodis_tranformer"
 import os
 import pandas as pd
 import torch
@@ -35,6 +35,11 @@ columns = ["uid", "w1_duration", "w1_num_likes", "w1_num_comments", "w1_watched_
 
 df_train = pd.read_csv('dataset/final_input/final_train.csv', header=0)
 df_test = pd.read_csv('dataset/final_input/final_test.csv', header=0)
+
+
+df_train = df_train.dropna()
+df_test = df_test.dropna()
+
 
 df_train = df_train.drop(['uid'], axis=1)
 df_test = df_test.drop(['uid'], axis=1)
@@ -67,7 +72,7 @@ dnn_feature_columns = fixlen_feature_columns
 linear_feature_columns = fixlen_feature_columns
 
 feature_names = get_feature_names(
-    linear_feature_columns + dnn_feature_columns)
+        linear_feature_columns + dnn_feature_columns)
 
 # Generate final_input data for model
 train_model_input = {name: df_train[name] for name in feature_names}
@@ -127,8 +132,10 @@ if __name__ == '__main__':
     model.compile("adam", loss=["binary_crossentropy", "binary_crossentropy", "binary_crossentropy"],
                   metrics=['accuracy', 'accuracy', 'accuracy'])
 
-    history = model.fit(train_model_input, df_train[target].values, batch_size=256, epochs=100, verbose=1,
-                        validation_split=0.1, shuffle=True, callbacks=[early_stopping])
+    # history = model.fit(train_model_input, df_train[target].values, batch_size=256, epochs=100, verbose=1,
+    #                     validation_split=0.3, shuffle=True, callbacks=[early_stopping])
+    history = model.fit(train_model_input, df_train[target].values, batch_size=256, epochs=50, verbose=1,
+                        validation_split=0.1, shuffle=True)
 
     pred_ans = model.predict(test_model_input, 256)
     pred_df = pd.DataFrame(pred_ans, columns=target)

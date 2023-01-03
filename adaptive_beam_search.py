@@ -1,3 +1,4 @@
+import ast
 import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -11,14 +12,14 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from deepctr_torch.inputs import SparseFeat, DenseFeat, get_feature_names
 from deepctr_torch.models import *
 
-MODEL_PATH = r"C:\Users\MSI I5\PycharmProjects\tabular-dl-num-embeddings\model.pth"
+MODEL_PATH = r'C:\Users\MSI I5\PycharmProjects\Short-Video-Recommendation\results\autodis\model.pth'
+MODEL_PATH = 'model.pth'
 
 columns = ["uid", "w1_duration", "w1_num_likes", "w1_num_comments", "w1_watched_time", "w1_like", "w2_duration", "w2_num_likes", "w2_num_comments", "w2_watched_time", "w2_like", "w3_duration", "w3_num_likes", "w3_num_comments", "w3_watched_time", "w3_like", "w4_duration", "w4_num_likes", "w4_num_comments", "w4_watched_time", "w4_like", "w5_duration", "w5_num_likes", "w5_num_comments",
            "w5_watched_time", "w5_like", "w6_duration", "w6_num_likes", "w6_num_comments", "w6_watched_time", "w6_like", "w7_duration", "w7_num_likes", "w7_num_comments", "w7_watched_time", "w7_like", "w8_duration", "w8_num_likes", "w8_num_comments", "w8_watched_time", "w8_like", "w9_duration", "w9_num_likes", "w9_num_comments", "w9_watched_time", "w9_like", "w10_duration",
            "w10_num_likes", "w10_num_comments", "w10_watched_time", "w10_like", "c1_duration", "c1_num_likes", "c1_num_comments", "c2_duration", "c2_num_likes", "c2_num_comments", "c3_duration", "c3_num_likes", "c3_num_comments", "c4_duration", "c4_num_likes", "c4_num_comments", "t1_duration", "t1_num_likes", "t1_num_comments", "p_like", "p_has_next", "p_effective_view"]
-df_train = pd.read_csv(r'C:\Users\MSI I5\PycharmProjects\tabular-dl-num-embeddings\MMoE\final_train.csv', header=0)
-# df_train = df_train.iloc[:500, :]
-df_test = pd.read_csv(r'C:\Users\MSI I5\PycharmProjects\tabular-dl-num-embeddings\MMoE\final_test.csv', header=0)
+df_train = pd.read_csv('dataset/final_input/final_train.csv', header=0)
+df_test = pd.read_csv('dataset/final_input/final_test.csv', header=0)
 
 df_train = df_train.drop(['uid'], axis=1)
 df_test = df_test.drop(['uid'], axis=1)
@@ -66,7 +67,7 @@ test_model_input = {name: df_test[name] for name in feature_names}
 # Load the model
 model = torch.load(MODEL_PATH)
 
-## ------------ Adaptive beam search
+# ------------ Adaptive beam search
 columns_without_uid = ["w1_duration", "w1_num_likes", "w1_num_comments", "w1_watched_time", "w1_like", "w2_duration", "w2_num_likes", "w2_num_comments", "w2_watched_time", "w2_like", "w3_duration", "w3_num_likes", "w3_num_comments", "w3_watched_time", "w3_like", "w4_duration", "w4_num_likes", "w4_num_comments", "w4_watched_time", "w4_like", "w5_duration", "w5_num_likes", "w5_num_comments",
                        "w5_watched_time", "w5_like", "w6_duration", "w6_num_likes", "w6_num_comments", "w6_watched_time", "w6_like", "w7_duration", "w7_num_likes", "w7_num_comments", "w7_watched_time", "w7_like", "w8_duration", "w8_num_likes", "w8_num_comments", "w8_watched_time", "w8_like", "w9_duration", "w9_num_likes", "w9_num_comments", "w9_watched_time", "w9_like", "w10_duration",
                        "w10_num_likes", "w10_num_comments", "w10_watched_time", "w10_like", "c1_duration", "c1_num_likes", "c1_num_comments", "c2_duration", "c2_num_likes", "c2_num_comments", "c3_duration", "c3_num_likes", "c3_num_comments", "c4_duration", "c4_num_likes", "c4_num_comments", "t1_duration", "t1_num_likes", "t1_num_comments", "p_like", "p_has_next", "p_effective_view"]
@@ -110,12 +111,22 @@ def calculate_stability_from_beam_scores(beam_scores):
     return min(beam_scores) / max(beam_scores)
 
 
-def create_a_series_with_filled_candidates_and_empty_target_features(beam_indices, candidate_features_list, many_candidate_features_column_names, target_features_column_names):
+def create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, beam_indices, candidate_features_list, many_candidate_features_column_names,
+                                                                     target_features_column_names):
     temp = df_train.iloc[0, :].copy()
     temp[target_features_column_names] = 0
     row_series_with_empty_candidates_and_target_features = temp
 
-    for candidate_position, beam_index in enumerate(beam_indices):
+    # Fill watched candidate
+    for watched_candidate_position, watched_candidate_index in enumerate(watched_candidates_indices, start=0):
+        # Fill candidate videos' features
+        candidate_features_column_names = many_candidate_features_column_names[watched_candidate_position]
+        candidate_features_value = candidate_features_list[watched_candidate_index]
+        row_series_with_empty_candidates_and_target_features[candidate_features_column_names] = candidate_features_value
+
+    unfilled_candidate_position = len(watched_candidates_indices)
+
+    for candidate_position, beam_index in enumerate(beam_indices, start=unfilled_candidate_position):
         # Fill candidate videos' features
         candidate_features_column_names = many_candidate_features_column_names[candidate_position]
         candidate_features_value = candidate_features_list[beam_index]
@@ -138,28 +149,39 @@ def create_input(target_video_indices, a_series_with_filled_candidates_and_empty
 
 
 beam_size = 2
-many_beam_indices = [[_] for _ in range(beam_size)]
-many_beam_scores = [_ for _ in range(beam_size)]
 
 # ------------ START ------------
 # Getting the permutations after the first forward pass
 
 # Split test df to each sliding_window
-num_sliding_windows = len(df_test) // 25
+num_candidate_per_response = 7
+num_sliding_windows = len(df_test) // num_candidate_per_response
 many_new_candidate_orders = []
 many_relevant_labels = []
 
 for sliding_window_index in range(num_sliding_windows):
-    df_test_for_this_sliding_window = df_test.iloc[sliding_window_index * 25:sliding_window_index * 25 + 7, :].copy()
-    test_model_input = {name: df_test_for_this_sliding_window[name] for name in feature_names}
+    many_beam_indices = [[_] for _ in range(beam_size)]
+    many_beam_scores = [_ for _ in range(beam_size)]
+    watched_candidates_indices = []
+
+    df_test_for_this_sliding_window = df_test.iloc[sliding_window_index * 7:sliding_window_index * 7 + 7, :].copy()
+
+    video_indices = list(range(num_candidate_per_response))
+
+    # Get a list of all features of the candidate videos
+    candidate_features_list = []
+    for _, row in df_test_for_this_sliding_window.iterrows():
+        features_of_the_current_target = row[target_features_column_names]
+        candidate_features_list.append(features_of_the_current_target)
+
+    a_series_with_watched_candidates_and_empty_target_features = create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, [], candidate_features_list,
+                                                                                                                                  many_candidate_features_column_names, target_features_column_names)
+    test_model_input = create_input(video_indices, a_series_with_watched_candidates_and_empty_target_features, candidate_features_list)
 
     pred_ans = model.predict(test_model_input, 256)
-    predictions_list = pred_ans.tolist()
-    video_indices = list(range(0, len(predictions_list)))
-    predictions_list = list(zip(video_indices, predictions_list))
+    predictions_list = list(zip(video_indices, pred_ans.tolist()))
     permutations = [[item] for item in predictions_list]
 
-    #
     many_list_rewards = [(permutation, calculate_list_reward(permutation)) for permutation in permutations]
     many_list_rewards = sorted(many_list_rewards, key=lambda item: item[1], reverse=True)
     top_list_rewards = many_list_rewards[:beam_size]
@@ -173,21 +195,15 @@ for sliding_window_index in range(num_sliding_windows):
     # After choosing k beams in the first iteration,
     # for each beam, choose the permutation with the largest reward
 
-    count = 0
-    for step in range(4):
-        print(f'------------ step {count + 1} ------------')
+    num_steps = 4
+    for step in range(num_steps):
         for beam_indices_index, beam_indices in enumerate(many_beam_indices):
-            print('------------')
-            target_video_indices = [index for index in video_indices if index not in beam_indices]
-
-            # Get a list of all features of the candidate videos
-            candidate_features_list = []
-            for _, row in df_train.iterrows():
-                features_of_the_current_target = row[target_features_column_names]
-                candidate_features_list.append(features_of_the_current_target)
+            target_video_indices = [index for index in video_indices if index not in beam_indices and index not in watched_candidates_indices]
 
             # Generate features
-            a_series_with_filled_candidates_and_empty_target_features = create_a_series_with_filled_candidates_and_empty_target_features(beam_indices, candidate_features_list, many_candidate_features_column_names, target_features_column_names)
+            a_series_with_filled_candidates_and_empty_target_features = create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, beam_indices,
+                                                                                                                                         candidate_features_list, many_candidate_features_column_names,
+                                                                                                                                         target_features_column_names)
             new_train_model_input = create_input(target_video_indices, a_series_with_filled_candidates_and_empty_target_features, candidate_features_list)
 
             # Predict
@@ -219,7 +235,6 @@ for sliding_window_index in range(num_sliding_windows):
         print()
         print(f'Stability: {min(many_beam_scores) / max(many_beam_scores)}')
 
-        count += 1
     # Return the first video index in the beam with the largest LR
     max_value = max(many_beam_scores)
     index_of_beam_with_largest_reward = 0
@@ -227,9 +242,12 @@ for sliding_window_index in range(num_sliding_windows):
         if many_beam_scores[i] == max_value:
             index_of_beam_with_largest_reward = i
             break
+
     new_candidate_order = many_beam_indices[index_of_beam_with_largest_reward]
-    index_of_next_video_to_show = new_candidate_order[0]
     many_new_candidate_orders.append(new_candidate_order)
+
+    index_of_next_video_to_show = new_candidate_order[0]
+    watched_candidates_indices.append(index_of_next_video_to_show)
 
     # Create relavant column
     relevant_labels_for_this_sliding_window = df_test_for_this_sliding_window.apply(lambda row: 1 if any([row['p_effective_view'], row['p_like']]) else 0, axis=1)
