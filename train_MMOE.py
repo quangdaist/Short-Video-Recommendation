@@ -1,11 +1,11 @@
 # no autodis
-## python train_MMOE.py -sav_mod "./model_output/no_autodis"
+## python train_MMOE.py -sav_mod "./results/no_autodis"
 # autodis
-## python train_MMOE.py -ad -sav_mod "./model_output/autodis"
+## python train_MMOE.py -ad -sav_mod "./results/autodis"
 # transformer
-## python train_MMOE.py -tx -sav_mod "./model_output/transformer"
+## python train_MMOE.py -tx -sav_mod "./results/transformer"
 # autodis + transformer
-## python train_MMOE.py -ad -tx -sav_mod "./model_output/autodis_tranformer"
+## python train_MMOE.py -ad -tx -sav_mod "./results/autodis_tranformer"
 import os
 import pandas as pd
 import torch
