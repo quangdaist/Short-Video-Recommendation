@@ -18,10 +18,8 @@ MODEL_PATH = 'model.pth'
 columns = ["uid", "w1_duration", "w1_num_likes", "w1_num_comments", "w1_watched_time", "w1_like", "w2_duration", "w2_num_likes", "w2_num_comments", "w2_watched_time", "w2_like", "w3_duration", "w3_num_likes", "w3_num_comments", "w3_watched_time", "w3_like", "w4_duration", "w4_num_likes", "w4_num_comments", "w4_watched_time", "w4_like", "w5_duration", "w5_num_likes", "w5_num_comments",
            "w5_watched_time", "w5_like", "w6_duration", "w6_num_likes", "w6_num_comments", "w6_watched_time", "w6_like", "w7_duration", "w7_num_likes", "w7_num_comments", "w7_watched_time", "w7_like", "w8_duration", "w8_num_likes", "w8_num_comments", "w8_watched_time", "w8_like", "w9_duration", "w9_num_likes", "w9_num_comments", "w9_watched_time", "w9_like", "w10_duration",
            "w10_num_likes", "w10_num_comments", "w10_watched_time", "w10_like", "c1_duration", "c1_num_likes", "c1_num_comments", "c2_duration", "c2_num_likes", "c2_num_comments", "c3_duration", "c3_num_likes", "c3_num_comments", "c4_duration", "c4_num_likes", "c4_num_comments", "t1_duration", "t1_num_likes", "t1_num_comments", "p_like", "p_has_next", "p_effective_view"]
-df_train = pd.read_csv('dataset/final_input/final_train.csv', header=0)
 df_test = pd.read_csv('dataset/final_input/final_test.csv', header=0)
 
-df_train = df_train.drop(['uid'], axis=1)
 df_test = df_test.drop(['uid'], axis=1)
 columns.remove('uid')
 
@@ -35,21 +33,18 @@ target = ["p_like", "p_has_next", "p_effective_view"]
 dense_features = [feature for feature in columns if feature in list(set(columns) - set(sparse_features) - set(target))]
 
 for column in columns:
-    df_train[column] = df_train[column].astype('float')
     df_test[column] = df_test[column].astype('float')
 
 # Label Encoding for sparse features,and do simple Transformation for dense features
 for feat in sparse_features:
     lbe = LabelEncoder()
-    df_train[feat] = lbe.fit_transform(df_train[feat])
     df_test[feat] = lbe.fit_transform(df_test[feat])
 
 mms = MinMaxScaler(feature_range=(0, 1))
-df_train[dense_features] = mms.fit_transform(df_train[dense_features])
 df_test[dense_features] = mms.fit_transform(df_test[dense_features])
 
 # Count #unique features for each sparse field,and record dense feature field name
-fixlen_feature_columns = [SparseFeat(feat, vocabulary_size=df_train[feat].max() + 1, embedding_dim=8)
+fixlen_feature_columns = [SparseFeat(feat, vocabulary_size=df_test[feat].max() + 1, embedding_dim=8)
                           for feat in sparse_features] + [DenseFeat(feat, 1, )
                                                           for feat in dense_features]
 
@@ -61,7 +56,6 @@ feature_names = get_feature_names(
 #
 # Generate input data for model
 
-train_model_input = {name: df_train[name] for name in feature_names}
 test_model_input = {name: df_test[name] for name in feature_names}
 
 # Load the model
@@ -113,7 +107,7 @@ def calculate_stability_from_beam_scores(beam_scores):
 
 def create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, beam_indices, candidate_features_list, many_candidate_features_column_names,
                                                                      target_features_column_names):
-    temp = df_train.iloc[0, :].copy()
+    temp = df_test.iloc[0, :].copy()
     temp[target_features_column_names] = 0
     row_series_with_empty_candidates_and_target_features = temp
 
@@ -136,6 +130,14 @@ def create_a_series_with_filled_candidates_and_empty_target_features(watched_can
 
 
 def create_input(target_video_indices, a_series_with_filled_candidates_and_empty_target_features, candidate_features_list):
+    """
+
+    :param target_video_indices:
+    :param a_series_with_filled_candidates_and_empty_target_features:
+    :param candidate_features_list:
+    :return: a DataFrame
+    """
+
     df_empty = pd.DataFrame(columns=columns_without_uid)
     # Fill target video features
     for target_video_index in target_video_indices:
@@ -144,8 +146,20 @@ def create_input(target_video_indices, a_series_with_filled_candidates_and_empty
         df_empty = df_empty.append(a_series_with_filled_candidates_and_empty_target_features)
 
     df_new = df_empty
-    model_input = {name: df_new[name] for name in feature_names}
-    return model_input
+    return df_new
+
+
+def get_predictions(model, df_model_input):
+    """
+
+    :param model:
+    :param df_model_input:
+    :return: list of lists
+    """
+    test_model_input = {name: df_model_input[name] for name in feature_names}
+    pred_ans = model.predict(test_model_input, 256)
+    pred_ans = pred_ans.tolist()
+    return pred_ans
 
 
 beam_size = 2
@@ -176,10 +190,10 @@ for sliding_window_index in range(num_sliding_windows):
 
     a_series_with_watched_candidates_and_empty_target_features = create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, [], candidate_features_list,
                                                                                                                                   many_candidate_features_column_names, target_features_column_names)
-    test_model_input = create_input(video_indices, a_series_with_watched_candidates_and_empty_target_features, candidate_features_list)
+    df_model_input = create_input(video_indices, a_series_with_watched_candidates_and_empty_target_features, candidate_features_list)
 
-    pred_ans = model.predict(test_model_input, 256)
-    predictions_list = list(zip(video_indices, pred_ans.tolist()))
+    pred_ans = get_predictions(model, df_model_input)
+    predictions_list = list(zip(video_indices, pred_ans))
     permutations = [[item] for item in predictions_list]
 
     many_list_rewards = [(permutation, calculate_list_reward(permutation)) for permutation in permutations]
@@ -204,11 +218,10 @@ for sliding_window_index in range(num_sliding_windows):
             a_series_with_filled_candidates_and_empty_target_features = create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, beam_indices,
                                                                                                                                          candidate_features_list, many_candidate_features_column_names,
                                                                                                                                          target_features_column_names)
-            new_train_model_input = create_input(target_video_indices, a_series_with_filled_candidates_and_empty_target_features, candidate_features_list)
-
+            df_model_input = create_input(target_video_indices, a_series_with_filled_candidates_and_empty_target_features, candidate_features_list)
             # Predict
-            pred_ans = model.predict(new_train_model_input)
-            predictions_list = list(zip(target_video_indices, pred_ans.tolist()))
+            pred_ans = get_predictions(model, df_model_input)
+            predictions_list = list(zip(target_video_indices, pred_ans))
 
             # Choose the permutation with the largest reward
             new_permutations_in_this_beam = [permutations_in_top_k_list_rewards[beam_indices_index].copy() for _ in range(len(target_video_indices))]
