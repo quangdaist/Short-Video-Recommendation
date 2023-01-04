@@ -16,6 +16,7 @@ from deepctr_torch.models import *
 import sys
 
 sys.path.append(r'C:\Users\MSI I5\PycharmProjects\Short-Video-Recommendation\models\Multitask-Recommendation-Library')
+sys.path.append('/content/Short-Video-Recommendation/models/Multitask-Recommendation-Library')
 
 import pandas as pd
 from models.omoe import OMoEModel
