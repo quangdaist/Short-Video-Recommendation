@@ -1,3 +1,4 @@
+import pandas as pd
 import torch
 import tqdm
 from sklearn.metrics import roc_auc_score
@@ -158,8 +159,15 @@ def main(dataset_name,
     print("Getting dataset...")
     # train_dataset = get_dataset(dataset_name, os.path.join(dataset_path, dataset_name) + '/train.csv')
     # test_dataset = get_dataset(dataset_name, os.path.join(dataset_path, dataset_name) + '/test.csv')
-    train_dataset = get_dataset('', '../../dataset/final_input/final_train.csv')
-    test_dataset = get_dataset('', '../../dataset/final_input/final_test.csv')
+
+    df_train = pd.read_csv('../../dataset/final_input/final_train.csv')
+    df_train = df_train.dropna()
+
+    df_test = pd.read_csv('../../dataset/final_input/final_test.csv')
+    df_test = df_test.dropna()
+
+    train_dataset = get_dataset('', df_train)
+    test_dataset = get_dataset('', df_test)
     train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
     test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=False)
     print("Dataset loaded!")
@@ -187,6 +195,8 @@ def main(dataset_name,
             print("Stop training! Start testing...")
             print(f'test: best auc: {early_stopper.best_accuracy}')
             break
+
+        break
 
     model.load_state_dict(torch.load(save_path))
     auc, loss = test(model, test_data_loader, task_num, device)
