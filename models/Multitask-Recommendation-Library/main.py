@@ -198,7 +198,6 @@ def main(dataset_name,
             print(f'test: best auc: {early_stopper.best_accuracy}')
             break
 
-        break
 
     model.load_state_dict(torch.load(save_path))
     auc, loss = test(model, test_data_loader, task_num, device)
