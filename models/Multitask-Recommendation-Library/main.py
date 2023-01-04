@@ -161,9 +161,11 @@ def main(dataset_name,
     # test_dataset = get_dataset(dataset_name, os.path.join(dataset_path, dataset_name) + '/test.csv')
 
     df_train = pd.read_csv('../../dataset/final_input/final_train.csv')
+    df_train = df_train.drop(['uid'], axis=1)
     df_train = df_train.dropna()
 
     df_test = pd.read_csv('../../dataset/final_input/final_test.csv')
+    df_test = df_test.drop(['uid'], axis=1)
     df_test = df_test.dropna()
 
     train_dataset = get_dataset('', df_train)
