@@ -87,7 +87,7 @@ def get_predictions(model, df_model_input, model_name, feature_names, device):
         for i in range(task_num):
             predicts_dict[i] = list()
         with torch.no_grad():
-            for categorical_fields, numerical_fields, labels in tqdm.tqdm(test_data_loader, smoothing=0, mininterval=1.0):
+            for categorical_fields, numerical_fields, labels in tqdm.tqdm(test_data_loader, smoothing=0, mininterval=1.0, disable=True):
                 categorical_fields, numerical_fields, labels = categorical_fields.to(device), numerical_fields.to(device), labels.to(device)
                 y = model(categorical_fields, numerical_fields)
                 for i in range(task_num):
