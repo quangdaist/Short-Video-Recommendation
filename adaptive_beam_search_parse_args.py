@@ -308,15 +308,15 @@ def main(model_name, model_path, test_set_path, device):
                 permutation_with_the_largest_list_reward = single_top_list_reward[0]
 
                 # print(f'Old: {beam_indices}')
-                print(f'New: {new_beam_indices}')
-                print(f'LR: {new_beam_score}')
+                # print(f'New: {new_beam_indices}')
+                # print(f'LR: {new_beam_score}')
 
                 # Update
                 many_beam_indices[beam_indices_index] = new_beam_indices
                 many_beam_scores[beam_indices_index] = new_beam_score
                 permutations_in_top_k_list_rewards[beam_indices_index] = permutation_with_the_largest_list_reward
-            print()
-            print(f'Stability: {min(many_beam_scores) / max(many_beam_scores)}')
+            # print()
+            # print(f'Stability: {min(many_beam_scores) / max(many_beam_scores)}')
 
         # Return the first video index in the beam with the largest LR
         max_value = max(many_beam_scores)
@@ -361,7 +361,7 @@ def main(model_name, model_path, test_set_path, device):
     df_for_MRR['indexes'] = df_for_MRR.apply(lambda x: [get_index(x, value) for value in x.gt_order], axis=1)
     df_for_MRR['pred_relevant'] = df_for_MRR.apply(lambda x: [get_relevant(x, i) for i in x.indexes], axis=1)
     df_for_MRR['recip_rank'] = df_for_MRR['pred_relevant'].apply(lambda x: 1 / (x.index(1) + 1) if 1 in x else -np.inf)
-    print(df_for_MRR['recip_rank'][df_for_MRR['recip_rank'] != -np.inf].mean())
+    print(f"MRR: {df_for_MRR['recip_rank'][df_for_MRR['recip_rank'] != -np.inf].mean()}")
 
 
 if __name__ == '__main__':
