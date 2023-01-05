@@ -182,7 +182,7 @@ def main(dataset_name,
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(params=model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     save_path = f'{save_dir}/{dataset_name}_{model_name}.pt'
-    early_stopper = EarlyStopper(num_trials=2, save_path=save_path)
+    early_stopper = EarlyStopper(num_trials=20, save_path=save_path)
     print("Start training...")
     for epoch_i in range(epoch):
         if model_name == 'metaheac':
@@ -222,7 +222,7 @@ if __name__ == '__main__':
     parser.add_argument('--task_num', type=int, default=3)
     parser.add_argument('--expert_num', type=int, default=8)
     parser.add_argument('--learning_rate', type=float, default=0.001)
-    parser.add_argument('--batch_size', type=int, default=2048)
+    parser.add_argument('--batch_size', type=int, default=256)
     parser.add_argument('--embed_dim', type=int, default=128)
     parser.add_argument('--weight_decay', type=float, default=1e-6)
     parser.add_argument('--device', default='cpu')
