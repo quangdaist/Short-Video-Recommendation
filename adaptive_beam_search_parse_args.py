@@ -33,8 +33,8 @@ import torch
 from torch.utils.data import DataLoader
 
 
-def get_dataset(df_for_MRR):
-    return MyDataset(df_for_MRR)
+def get_dataset(df):
+    return MyDataset(df)
 
 
 def load_model(name, dataset, path):
@@ -135,8 +135,8 @@ def calculate_stability_from_beam_scores(beam_scores):
     return min(beam_scores) / max(beam_scores)
 
 
-def create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, beam_indices, candidate_features_list, many_candidate_features_column_names, target_features_column_names, df_for_MRR):
-    temp = df_for_MRR.iloc[0, :].copy()
+def create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, beam_indices, candidate_features_list, many_candidate_features_column_names, target_features_column_names, df):
+    temp = df.iloc[0, :].copy()
     temp[target_features_column_names] = 0
     row_series_with_empty_candidates_and_target_features = temp
 
@@ -158,7 +158,7 @@ def create_a_series_with_filled_candidates_and_empty_target_features(watched_can
     return row_series_with_empty_candidates_and_target_features
 
 
-def create_input(target_video_indices, a_series_with_filled_candidates_and_empty_target_features, candidate_features_list, target_features_column_names, columns):
+def create_df_input(target_video_indices, a_series_with_filled_candidates_and_empty_target_features, candidate_features_list, target_features_column_names, columns):
     """
 
     :param target_video_indices:
@@ -262,7 +262,7 @@ def main(model_name, model_path, test_set_path, device):
             candidate_features_list.append(features_of_the_current_target)
 
         a_series_with_watched_candidates_and_empty_target_features = create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, [], candidate_features_list, many_candidate_features_column_names, target_features_column_names, df_test)
-        df_model_input = create_input(video_indices, a_series_with_watched_candidates_and_empty_target_features, candidate_features_list, target_features_column_names, columns)
+        df_model_input = create_df_input(video_indices, a_series_with_watched_candidates_and_empty_target_features, candidate_features_list, target_features_column_names, columns)
 
         pred_ans = get_predictions(model, df_model_input, model_name, feature_names, device)
         predictions_list = list(zip(video_indices, pred_ans))
@@ -288,7 +288,7 @@ def main(model_name, model_path, test_set_path, device):
 
                 # Generate features
                 a_series_with_filled_candidates_and_empty_target_features = create_a_series_with_filled_candidates_and_empty_target_features(watched_candidates_indices, beam_indices, candidate_features_list, many_candidate_features_column_names, target_features_column_names, df_test)
-                df_model_input = create_input(video_indices, a_series_with_filled_candidates_and_empty_target_features, candidate_features_list, target_features_column_names, columns)
+                df_model_input = create_df_input(video_indices, a_series_with_filled_candidates_and_empty_target_features, candidate_features_list, target_features_column_names, columns)
                 # Predict
                 pred_ans = get_predictions(model, df_model_input, model_name, feature_names, device)
                 predictions_list = list(zip(target_video_indices, pred_ans))
