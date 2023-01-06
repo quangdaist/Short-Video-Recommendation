@@ -170,8 +170,8 @@ def main(dataset_name,
 
     train_dataset = get_dataset('', df_train)
     test_dataset = get_dataset('', df_test)
-    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
-    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=False)
+    train_data_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=2, shuffle=True)
+    test_data_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=2, shuffle=False)
     print("Dataset loaded!")
 
     field_dims = train_dataset.field_dims
