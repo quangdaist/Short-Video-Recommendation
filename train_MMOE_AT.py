@@ -1,9 +1,9 @@
 # autodis
-## python train_MMOE_AD.py -ad -sav_mod "./results/autodis"
+## python train_MMOE_AT.py -ad -sav_mod "./results/autodis"
 # transformer
-## python train_MMOE_AD.py -tx -sav_mod "./results/transformer"
+## python train_MMOE_AT.py -tx -sav_mod "./results/transformer"
 # autodis + transformer
-## python train_MMOE_AD.py -ad -tx -sav_mod "./results/autodis_tranformer"
+## python train_MMOE_AT.py -ad -tx -sav_mod "./results/autodis_tranformer"
 import os
 import pandas as pd
 import torch
@@ -34,10 +34,8 @@ columns = ["uid", "w1_duration", "w1_num_likes", "w1_num_comments", "w1_watched_
 df_train = pd.read_csv('dataset/final_input/final_train.csv', header=0)
 df_test = pd.read_csv('dataset/final_input/final_test.csv', header=0)
 
-
 df_train = df_train.dropna()
 df_test = df_test.dropna()
-
 
 df_train = df_train.drop(['uid'], axis=1)
 df_test = df_test.drop(['uid'], axis=1)
