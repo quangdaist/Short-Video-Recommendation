@@ -34,8 +34,10 @@ columns = ["uid", "w1_duration", "w1_num_likes", "w1_num_comments", "w1_watched_
 df_train = pd.read_csv('dataset/final_input/final_train.csv', header=0)
 df_test = pd.read_csv('dataset/final_input/final_test.csv', header=0)
 
+
 df_train = df_train.dropna()
 df_test = df_test.dropna()
+
 
 df_train = df_train.drop(['uid'], axis=1)
 df_test = df_test.drop(['uid'], axis=1)
@@ -123,15 +125,15 @@ if __name__ == '__main__':
     model = MMOE(dnn_feature_columns, task_types=['binary', 'binary', 'binary'], task_names=target, device=device,
                  use_autodis=args.autodis, use_transformers=args.transformer)
 
-    early_stopping = EarlyStopping(monitor='accuracy', min_delta=0, verbose=1, patience=10, mode='auto')
+    early_stopping = EarlyStopping(monitor='accuracy', min_delta=0, verbose=1, patience=20, mode='auto')
 
     model.compile("adam", loss=["binary_crossentropy", "binary_crossentropy", "binary_crossentropy"],
                   metrics=['accuracy', 'accuracy', 'accuracy'])
 
-    # history = model.fit(train_model_input, df_train[target].values, batch_size=256, epochs=100, verbose=1,
-    #                     validation_split=0.3, shuffle=True, callbacks=[early_stopping])
-    history = model.fit(train_model_input, df_train[target].values, batch_size=256, epochs=50, verbose=1,
-                        validation_split=0.1, shuffle=True)
+    history = model.fit(train_model_input, df_train[target].values, batch_size=128, epochs=100, verbose=1,
+                         validation_split=0.1, shuffle=True, callbacks=[early_stopping])
+    # history = model.fit(train_model_input, df_train[target].values, batch_size=128, epochs=50, verbose=1,
+    #                     validation_split=0.1, shuffle=True)
 
     pred_ans = model.predict(test_model_input, 256)
     pred_df = pd.DataFrame(pred_ans, columns=target)
@@ -151,8 +153,15 @@ if __name__ == '__main__':
     # Save the model
     if not os.path.exists(args.save_model):
         os.mkdir(args.save_model)
-    f_path = os.path.join(args.save_model, 'model.pth')
+    if args.autodis:
+      model_name = 'MMOE_A.pth'
+    if args.autodis and args.transformer:
+      model_name = 'MMOE_AT.pth'
+    else:
+      model_name = 'MMOE.pth'
+    f_path = os.path.join(args.save_model, model_name)
     torch.save(model, f_path)
 
     if args.plot_history:
         plot_history(history, args.save_model)
+
