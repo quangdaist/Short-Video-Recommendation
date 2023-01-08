@@ -4,7 +4,6 @@
 /User Data/
 .idea
 venv
-/dataset/raw
 /dataset/input
 /dataset/cleaned
 /word2vec_model
